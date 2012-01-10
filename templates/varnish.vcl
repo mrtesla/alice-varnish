@@ -1,3 +1,4 @@
+import redis;
 
 director routers round-robin {
   {{#routers}}
@@ -165,6 +166,15 @@ sub vcl_hit {
   if (req.request == "PURGE") {
     purge;
     error 200 "Purged. (HIT)";
+  }
+
+  if (obj.http.X-Alice-Application && obj.http.X-Alice-Cache-Version) {
+    if (redis.call(
+          "HGET alice.http|flags:" + obj.http.X-Alice-Application + " cache_version") !=
+          obj.http.X-Alice-Cache-Version) {
+      set obj.ttl = 0s;
+      return (restart);
+    }
   }
 
   if (req.http.Cache-Control ~ "no-cache") {
