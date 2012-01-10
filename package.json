@@ -5,7 +5,8 @@
     "contributors": [],
     "main": "varnish.js",
     "scripts": {},
-    "devDependencies": {
+    "dependencies": {
+        "airbrake":   ">=0.0.0",
         "handlebars": ">=0"
     },
     "repository": {

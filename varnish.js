@@ -1,6 +1,14 @@
-var Handlebars = require('handlebars')
-,   Http       = require('http')
-,   Fs         = require('fs')
+if (process.env['AIRBRAKE_KEY']) {
+  var airbrake = require('airbrake');
+  airbrake = airbrake.createClient(process.env['AIRBRAKE_KEY']);
+  airbrake.handleExceptions();
+}
+
+
+var Handlebars   = require('handlebars')
+,   Http         = require('http')
+,   Fs           = require('fs')
+,   ChildProcess = require('child_process')
 ;
 
 
@@ -12,8 +20,13 @@ var _fetch_endpoints
 
 
 var vcl_template
+,   alice_host
+,   alice_port
 ;
 
+alice_host = process.env['ALICE_HOST'] || 'localhost';
+alice_port = process.env['ALICE_PORT'] || '5000';
+alice_port = parseInt(alice_port, 10);
 
 _fetch_endpoints = function(){
   var buffer
@@ -24,8 +37,8 @@ _fetch_endpoints = function(){
 
   buffer = "";
   options = {
-    host: 'localhost',
-    port: 5000,
+    host: alice_host,
+    port: alice_port,
     path: '/api_v1/routers.json'
   };
 
@@ -66,11 +79,38 @@ _render_config = function(endpoints){
 };
 
 _update_config = function(new_vcl){
-  Fs.writeFile(process.env['ALICE_VARNISH_VCL'], new_vcl, 'utf8', function(err){
-    if (err) {
-      console.log('Got error: '+err.message);
-      return;
-    }
+  Fs.readFile(process.env['ALICE_VARNISH_VCL'], 'utf8', function(err, data){
+    if (err) { throw err; }
+
+    if (data == new_vcl) { return; }
+
+    Fs.writeFile(process.env['ALICE_VARNISH_VCL'], new_vcl, 'utf8', function(err){
+      if (err) { throw err; }
+
+      _reload_varnish();
+    });
+  });
+};
+
+_reload_varnish = function(){
+  var reload
+  ;
+
+  reload = ChildProcess.spawn('sh', ['-c', process.env['ALICE_VARNISH_RELOAD']]);
+
+  reload.stdout.on('data', function (data) {
+    console.log('stdout: ' + data);
+  });
+
+  reload.stderr.on('data', function (data) {
+    console.log('stderr: ' + data);
+  });
+
+  reload.on('exit', function (code) {
+    console.log('child process ('
+               +process.env['ALICE_VARNISH_RELOAD']
+               +') exited with code '
+               +code);
   });
 };
 
