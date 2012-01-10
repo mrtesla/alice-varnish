@@ -120,5 +120,6 @@ Fs.readFile(__dirname+'/templates/varnish.vcl', 'utf8', function(err, data){
   if (err) throw err;
   vcl_template = Handlebars.compile(data);
 
+  _fetch_endpoints();
   setInterval(_fetch_endpoints, 60000);
 });

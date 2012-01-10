@@ -34,11 +34,32 @@ sub vcl_recv {
   set req.backend = routers;
 
   if (req.restarts == 0) {
-    if (req.http.x-forwarded-for) {
+    if (req.http.X-Forwarded-For) {
       set req.http.X-Forwarded-For =
           req.http.X-Forwarded-For + ", " + client.ip;
     } else {
       set req.http.X-Forwarded-For = client.ip;
+    }
+
+    if (req.http.X-Forwarded-Proto) {
+      set req.http.X-Forwarded-Proto =
+          req.http.X-Forwarded-Proto + ", http";
+    } else {
+      set req.http.X-Forwarded-Proto = "http";
+    }
+
+    if (req.http.X-Forwarded-Host) {
+      set req.http.X-Forwarded-Host =
+          req.http.X-Forwarded-Host + ", " + req.http.Host;
+    } else {
+      set req.http.X-Forwarded-Host = req.http.Host;
+    }
+
+    if (req.http.X-Forwarded-Port) {
+      set req.http.X-Forwarded-Port =
+          req.http.X-Forwarded-Port + ", " + server.port;
+    } else {
+      set req.http.X-Forwarded-Port = server.port;
     }
   }
 
