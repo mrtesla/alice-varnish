@@ -223,11 +223,9 @@ sub vcl_fetch {
 
   if (req.url ~ "\.(css|js|gif|jpg|jpeg|bmp|png|ico|img|tga|wmf)(\?\d+)?$") {
     unset beresp.http.Set-Cookie;
-    set beresp.http.Cache-Control = "max-age=31536000,public";
-
-    # if (beresp.ttl < 3600s) {
-    #  set beresp.ttl = 600s;
-    # }
+    if (!beresp.http.Cache-Control) {
+      set beresp.http.Cache-Control = "max-age=31536000,public";
+    }
   }
 
   if (beresp.ttl <= 0s ||
