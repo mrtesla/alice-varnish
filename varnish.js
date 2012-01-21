@@ -20,9 +20,12 @@ var _fetch_endpoints
 
 
 var vcl_template
+,   varnish_host
 ,   alice_host
 ,   alice_port
 ;
+
+varnish_host = process.env['VARNISH_HOST'] || 'localhost';
 
 alice_host = process.env['ALICE_HOST'] || 'localhost';
 alice_port = process.env['ALICE_PORT'] || '5000';
@@ -39,7 +42,7 @@ _fetch_endpoints = function(){
   options = {
     host: alice_host,
     port: alice_port,
-    path: '/api_v1/routers.json'
+    path: '/api_v1/machines/'+varnish_host+'/routers.json'
   };
 
   Http.get(options, function(res) {
